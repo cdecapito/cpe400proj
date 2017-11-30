@@ -36,11 +36,22 @@ struct AdjList
   struct Node *head;
 };
 
+///Added New Struct to contain packetData
+
+struct PacketInfo
+{
+    int nodeNum;
+    int numberOfPackets;
+};
+
+
 class Graph{ 
     
 public: 
     int V;
     struct AdjList *arr;
+
+    // function that creates a graph of V verticies
 	Graph( int V )
     	{
       		this->V = V;
@@ -60,6 +71,7 @@ public:
     		return newNode;
     	}
 
+    //function that adds an edge to an undirected graph
 	void addEdge( int src, float currentEnergy1, float energyUsed1, float currentEnergy2, float energyUsed2, int dest )
 	{
 		//hello packets
@@ -121,6 +133,9 @@ int main()
 	int nodeSize; 
 	int sinkSize;
 	int totalSize;
+    int numberOfPacketCommands = 0;
+    int index;
+    PacketInfo *packetArr;
 	bool success;
 	ifstream fin;
 
@@ -138,6 +153,32 @@ int main()
 	}
 	fin.close();
 
+    fin.open( "packet.txt" );
+    
+    if( !fin.good() )
+    {
+        return 0;
+    }
+    else
+    {
+        //read in first number of file that shows how many commands there are
+        fin >> numberOfPacketCommands;
+
+        //create a array of PacketInfo
+        packetArr = new PacketInfo[ numberOfPacketCommands ];
+
+        //input data into packetArr
+        for( index = 0; index < numberOfPacketCommands; index++ )
+        {
+            fin >> packetArr[ index ].nodeNum;
+            fin >> packetArr[ index ].numberOfPackets;           
+        }        
+
+    }
+    fin.close();
+    
+
+    // create a graph given how many sinks and nodes are used
 	Graph graph( totalSize );
 
 	success = create_links( graph, totalSize, sinkSize );
