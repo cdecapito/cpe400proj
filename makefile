@@ -6,8 +6,8 @@ LFLAGS = -Wall $(DEBUG)
 main : main.o 
 	$(CC) $(LFLAGS) main.o -o main
 
-main.o : main.cpp 
-	$(CC) $(CFLAGS) main.cpp 
+main.o : main.cpp objects.cpp functions.cpp
+	$(CC) $(CFLAGS) main.cpp objects.cpp functions.cpp
 
 clean: 
 	\rm *.o main
