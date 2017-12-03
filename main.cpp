@@ -145,7 +145,7 @@ int main()
 	bool success;
 	ifstream fin;
 
-	fin.open( "links.txt" );
+	fin.open( "links1.txt" );
 
 	if( !fin.good() )
 	{
@@ -156,12 +156,15 @@ int main()
 		fin >> nodeSize;
 		fin >> sinkSize;
 		totalSize = nodeSize + sinkSize;
+
+		cout << "TOT" << totalSize << endl;
 	}
 	fin.close();
 
 	Graph graph( totalSize );
 
 	success = create_links( graph, totalSize, sinkSize );
+
 	if( !success )
 	{
 		cout << "Invalid graph file. Exiting now. " << endl;
@@ -183,7 +186,7 @@ bool create_links( Graph &graph, int totalSize, int sinkSize )
 	int pointer;
 	int temp;
 	float energy[ totalSize ];
-	fin.open( "links.txt" );
+	fin.open( "links1.txt" );
 
 	createRandomEnergy( energy, totalSize, sinkSize );
 
@@ -197,11 +200,14 @@ bool create_links( Graph &graph, int totalSize, int sinkSize )
 	for ( int index = 0; index < totalSize; index++ )
 	{
 		fin >> vertex;
-		fin >> edges;
-		for ( int subIndex = 0; subIndex < edges; subIndex++ )
+		if( vertex == index )
 		{
-			fin >> pointer;
-			graph.addEdge( index, 100.00, energy[ index ], 100.0, energy[ pointer ], pointer );
+			fin >> edges;
+			for ( int subIndex = 0; subIndex < edges; subIndex++ )
+			{
+				fin >> pointer;
+				graph.addEdge( index, 100.00, energy[ index ], 100.0, energy[ pointer ], pointer );
+			}
 		}
 	}
 
@@ -384,7 +390,6 @@ void dijkstra( Graph * graph, int src )
 				temp->energyConsumption + dist[ u ] < dist[ v ] )
 			{
 				dist[ v ] = dist[ u ] + temp->energyConsumption;
-
 
 				decreaseKey( minHeap, v, dist[ v ] );
 			}
