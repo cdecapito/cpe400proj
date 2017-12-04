@@ -42,7 +42,8 @@ void decreaseKey( struct MinHeap *minHeap, int v, float energyConsumption );
 bool isInMinHeap( struct MinHeap *minHeap, int v );
 void printArr( float arr[], int n );
 void dijkstra( Graph * graph, int src );
-
+void printSolution( float dist[], int V, int parent[] );
+void printPath( int parent[], int j);
 
 /**
  * @brief create_links
@@ -519,7 +520,11 @@ void printArr( float arr[], int n )
  */
 void dijkstra( Graph * graph, int src )
 {
+    //V = number of totalNodes
 	int V = graph->V; 
+
+    int parent[V];
+    //int key[V];
 	float dist[ V ];//distance values used to pick min energy consumption
 
 	struct MinHeap *minHeap = createMinHeap( V );
@@ -527,6 +532,8 @@ void dijkstra( Graph * graph, int src )
 	//initialize min heap with all vertices, dist value to INFINITY
 	for( int v = 0; v < V; v++ )
 	{
+        parent[0] = -1;        
+
 		dist[ v ] = INFINITY;
 		minHeap->array[ v ] = newMinHeapNode( v, dist[ v ] );
 		minHeap->position[ v ] = v;
@@ -561,6 +568,7 @@ void dijkstra( Graph * graph, int src )
 				dist[ u ] != INFINITY &&
 				temp->energyConsumption + dist[ u ] < dist[ v ] )
 			{
+                parent[ v] = u;
 				dist[ v ] = dist[ u ] + temp->energyConsumption;
 
 				//update distance value in minheap
@@ -573,5 +581,64 @@ void dijkstra( Graph * graph, int src )
 		}
 	}
 	//print shortest distance
-	printArr( dist, V );
+
+    //minheap int pos.  Shows the direction from a node to sink
+    
+   // cout << V << " before loops" << endl;
+/*
+    cout << minHeap -> size << endl;
+    for(int index = 0;index < V; index++ )
+    {
+        
+        for( int j = 0; j < minHeap[ index ].size; j++ )
+        {
+            //cout << minHeap[ index ].array[ j ] << " ";
+            //cout << minHeap->array[index][j].v << " ";
+        } 
+        cout << endl;
+    }
+*/
+   	cout << endl << endl;
+
+    printSolution( dist, V, parent );
+
+    cout << endl << endl;
+	//printArr( dist, V );
 }
+
+
+void printSolution( float dist[], int V, int parent[] )
+{
+    int src = 0;
+
+    //formating for reading the paths
+    cout << "Vertex     " << "Distance     " << "Path" << endl;
+    for( int i = 1; i < V; i++ )
+    {
+        cout << endl << src << " -> " << i << "      "<< dist[i] << "          " << src;
+        printPath(parent, i );
+    }
+
+}
+
+
+void printPath( int parent[], int j )
+{
+    if( parent[j] == -1)
+        return;
+    
+    printPath(parent, parent[j] );
+    cout<< j;
+
+
+}
+
+
+
+
+
+
+
+
+
+
