@@ -109,7 +109,37 @@ public:
    			cout << endl;
    		}
    	}
+    //sends packets until it reaches the sink
+    void sendPacket( int src, int dest, int* pathArray, int currentPathIndex )
+    {
+        Node *sendNode = arr[ src ].head;
+        //Node *recieveNode = arr[ dest ].head;
+
+        if( sendNode->currentEnergy - sendNode->energyConsumption > 0 )
+        {
+            if( dest != 0 )
+            {
+                sendPacket( dest, pathArray[ currentPathIndex + 1 ], pathArray, currentPathIndex + 1 );
+            }
+            else
+            {
+                //packet has reached the sink
+                return;
+            }
+        }
+        else
+        {
+            cout << "A NODE HAS DIED" << endl;
+            //return false;
+            return;
+        }
+    }
+
+
 };
+
+
+
 
 
 // MINHEAP OBJ DEFINITIONS

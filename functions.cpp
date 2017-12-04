@@ -41,9 +41,14 @@ struct MinHeapNode* extractMin( struct MinHeap *minHeap );
 void decreaseKey( struct MinHeap *minHeap, int v, float energyConsumption );
 bool isInMinHeap( struct MinHeap *minHeap, int v );
 void printArr( float arr[], int n );
-void dijkstra( Graph * graph, int src );
+void dijkstra( Graph * graph, int src, int** pathArray );
+void fixPathArray( int ** pathArray,int  V );
 void printSolution( float dist[], int V, int parent[] );
 void printPath( int parent[], int j);
+void outputPrintPath( fstream& fin, int parent[], int j );
+void init2Darray( int** array, int value, int V );
+void testNetwork( Graph * graph, int** pathArray, PacketInfo* packetInfoArray, int packetInstructions);
+
 
 /**
  * @brief create_links
@@ -518,7 +523,7 @@ void printArr( float arr[], int n )
  *
  * @note None
  */
-void dijkstra( Graph * graph, int src )
+void dijkstra( Graph * graph, int src, int** pathArray )
 {
     //V = number of totalNodes
 	int V = graph->V; 
@@ -582,28 +587,133 @@ void dijkstra( Graph * graph, int src )
 	}
 	//print shortest distance
 
-    //minheap int pos.  Shows the direction from a node to sink
     
-   // cout << V << " before loops" << endl;
-/*
-    cout << minHeap -> size << endl;
-    for(int index = 0;index < V; index++ )
-    {
+
+    //printSolution( dist, V, parent );
+
+
+
+///   Read Paths Out to a file ///
+
+    cout << endl << endl << "Output to file" << endl;
+    fstream fin ("output.txt");
+    for( int i = 1; i < V; i++ )
+    {   
         
-        for( int j = 0; j < minHeap[ index ].size; j++ )
-        {
-            //cout << minHeap[ index ].array[ j ] << " ";
-            //cout << minHeap->array[index][j].v << " ";
-        } 
+        outputPrintPath( fin, parent, i );
+        //printPath( parent, i );
         cout << endl;
+        fin << "-1 " << endl;
     }
-*/
-   	cout << endl << endl;
 
-    printSolution( dist, V, parent );
+    fin.close();
 
-    cout << endl << endl;
-	//printArr( dist, V );
+/////////////////////////////////
+
+  
+///  Read the file that you made ///
+    
+    fin.open("output.txt");
+    int checker;    
+    int j = 0;
+
+
+
+    
+
+
+    //algorithm that inputs the path into the pathArray
+    // the forloop starts with 1 because you dont need to write a path 
+    // from 0 node to 0
+    cout << endl << "first loop" << endl;
+    
+    //read in the file again
+    fin >> checker;        
+
+    //pathArray[1][0] = 0;
+    for( int i = 1; i < V; i++ )
+    {
+        //input the first part of the path
+        pathArray[i][j] = 0;
+        cout << pathArray[i][j] << " ";
+        
+        //iterate the array
+        j++;
+
+        //if there is a -1 in checker that means the path has ended
+        // from the given node.
+        while( checker != -1 )
+        {
+
+            //input next part of path
+            pathArray[i][j] = checker;
+            cout << pathArray[i][j] << " ";
+
+            //iterate the array
+            j++;
+
+            //read in the file again
+            fin >> checker;
+        }
+
+        //this code will be done if path from "i" node is finished
+        cout << endl;
+        j = 0;
+        fin >> checker;
+    }
+    
+    fin.close();
+
+/////////////////////////////////////////////////
+
+    fixPathArray( pathArray, V );
+
+   
+	printArr( dist, V );
+}
+
+
+//makes path from main node to sink
+void fixPathArray( int ** pathArray,int  V )
+{
+    int index = 1;
+    int innerIndex = 0;
+    int checkLeft = 0;
+    int checkRight = 0;
+    
+    for( index = 1; index < V; index++ )
+    {
+        for( innerIndex = 0; innerIndex < V; innerIndex++ )
+        {
+            if( pathArray[ index ][ innerIndex ] != -1 )
+            {
+                checkRight++;
+            }
+            else
+            {
+                checkRight--;
+                //swap around numbers to get the array correct
+                while( checkLeft <= checkRight )
+                {
+                    //cout << checkLeft << "-" << checkRight << "I be swap" << pathArray[ index ][ checkLeft ] << " - " <<pathArray[ index ][ checkRight ] << endl;
+                    
+                    int temp = pathArray[ index ][ checkLeft ];
+                    pathArray[ index ][ checkLeft ] = 
+                        pathArray[ index ][ checkRight ];
+    
+                    pathArray[ index ][ checkRight ] =
+                        temp;
+                
+                    checkLeft++;
+                    checkRight--;
+                } 
+                //end the forloop
+                innerIndex = V;
+            }
+        }
+        checkLeft = checkRight = 0;
+    }
+
 }
 
 
@@ -633,9 +743,78 @@ void printPath( int parent[], int j )
 
 }
 
+void outputPrintPath( fstream& fin, int parent[], int j )
+{
+    if( parent[j] == -1)
+        return;
+    
+    outputPrintPath(fin, parent, parent[j] );
+    fin << j << " ";
+    cout<< j;
+    
+}
 
 
+void init2Darray( int** array, int value, int V )
+{
+    //array = new int*[ V ];
+    for(int i = 0; i < V; i++ )
+    {
+        //array[i ] = new int[ V ];
+        for( int j = 0; j < V; j++)
+        {
+            array[i][j] = value;
+        }
 
+    }
+
+}
+
+
+void testNetwork( Graph* graph, int** pathArray, PacketInfo* packetInfoArray, int packetInstructions)
+{
+    int index = 0;
+    //int V = graph->V;
+    int workingNodeNum;
+    int numberOfPackets;
+    int destIndex;
+    int srcIndex;
+    int pathIndex = 0;    
+    int timeCounter = 0;
+
+
+    for( index = 0; index < packetInstructions; index++ )
+    {
+        //get the instructions in order
+        workingNodeNum = packetInfoArray[ index ].nodeNum;
+        numberOfPackets = packetInfoArray[ index ].numberOfPackets;
+
+        //cout << workingNodeNum << "-" << numberOfPackets << endl;
+
+
+       
+        
+        //now using the pathArray determine the destNode
+        if( pathArray[ workingNodeNum ][ pathIndex + 1 ] 
+                != -1)
+        {
+            //find which nodes to send and recieve with
+            srcIndex = pathArray[ workingNodeNum ][ pathIndex ];
+            destIndex = pathArray[ workingNodeNum ][ pathIndex + 1 ];
+            while( numberOfPackets > 0 )
+            {
+                
+                //send packet info: src, dest node, and pathOf future nodes
+                graph->sendPacket( srcIndex, destIndex, pathArray[ workingNodeNum ], pathIndex );
+                
+                timeCounter++;
+                numberOfPackets--;
+            }
+        }
+    }
+    
+    cout << "timeCounter: " << timeCounter << endl;
+}
 
 
 
