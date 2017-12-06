@@ -35,6 +35,7 @@ struct Node{
   float energyConsumption;  //health consumption per packet transfer
   int dest;   //destination node
   struct Node* next;  //next node pointer
+  int forwardSignalTo;
 };
 
 struct AdjList
@@ -100,46 +101,31 @@ public:
    			cout << "current energy: " << temp->currentEnergy << endl;
    			cout << "energy consumption: " << temp->energyConsumption << endl;
 
-   			cout << "head "; 			
+   			cout << "head"; 			
 			while( temp )
    			{
-   				cout << "-> " << temp->dest;
+   				cout << " -> " << temp->dest;
    				temp = temp->next;
    			}
    			cout << endl;
    		}
    	}
-    //sends packets until it reaches the sink
-    void sendPacket( int src, int dest, int* pathArray, int currentPathIndex )
-    {
-        Node *sendNode = arr[ src ].head;
-        //Node *recieveNode = arr[ dest ].head;
 
-        if( sendNode->currentEnergy - sendNode->energyConsumption > 0 )
-        {
-            if( dest != 0 )
-            {
-                sendPacket( dest, pathArray[ currentPathIndex + 1 ], pathArray, currentPathIndex + 1 );
-            }
-            else
-            {
-                //packet has reached the sink
-                return;
-            }
-        }
-        else
-        {
-            cout << "A NODE HAS DIED" << endl;
-            //return false;
-            return;
-        }
-    }
+   	bool sendSignal( int src )
+   	{
+   		if( src == 0 )
+   			return true;
+   		
+   		Node *temp = arr[ src ].head;
+   		temp->currentEnergy -= temp->energyConsumption;
 
+      for( int i = 0; i < 100000; i++ )
+        ;
 
+   		sendSignal( temp->forwardSignalTo );
+   		return true;
+   	}
 };
-
-
-
 
 
 // MINHEAP OBJ DEFINITIONS

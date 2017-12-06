@@ -22,27 +22,44 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <sys/time.h>
 #include "functions.cpp"
 
 using namespace std;
 
+long getWaitTime( timeval& start );
+
 int main()
 {
- 	ifstream fin;   
-	bool success;
+
 	int nodeSize; 
 	int sinkSize;
 	int totalSize;
-    int packetInstructions;
-    int **pathArray;
-    PacketInfo* packetInfoArray;
+	char filename[100];
+	char temp ;
+	bool success;
+	bool printDijkstra = false;
+	long initialEnergy;
+	double finalEnergy;
+	ifstream fin;
 
+	cout << "Enter filename containing graph information: ";
+	cin >> filename;
 
+	cout << "Would you like to output graph information (y/n): ";
+	cin >> temp;
 
+	if( temp == 'y' )
+	{
+		printDijkstra = true;
+	}
 
-	fin.open( "links1.txt" );
+	srand( time( NULL ) );
+
+ 	fin.open( filename );
 
 	if( !fin.good() )
 	{
@@ -51,100 +68,78 @@ int main()
 	else 
 	{
 		fin >> nodeSize;
+		cout << nodeSize << endl;
 		fin >> sinkSize;
+		cout << sinkSize << endl;
 		totalSize = nodeSize + sinkSize;
-
-		cout << "TOT" << totalSize << endl;
 	}
+	
 	fin.close();
-
-    //read in packetInfo
-    fin.open("packet.txt");
-    if( !fin.good() )
-	{
-		return 0;
-	}
-	else 
-	{
-		fin >> packetInstructions;
-
-        packetInfoArray = new PacketInfo[ packetInstructions ];
-
-        for( int index = 0; index < packetInstructions; index ++ )
-        {
-            fin >> packetInfoArray[ index ].nodeNum;
-            fin >> packetInfoArray[ index ].numberOfPackets;
-        }
-		
-
-	}
-
-
-
-
+	
 	Graph graph( totalSize );
-
-	success = create_links( graph, totalSize, sinkSize );
-
+	success = create_links( graph, filename, totalSize, sinkSize );
+	
 	if( !success )
 	{
 		cout << "Invalid graph file. Exiting now. " << endl;
 		return 0;
 	}
 
-	graph.printGraph();
-
-
-    // init 2D array with -1
-    // they are initialized with -1 to differentiate a path with 
-    // empty space
-     
-    pathArray = new int* [totalSize];
-    for( int i = 0; i < totalSize ; i++ )
-    {
-        pathArray[ i ] = new int[ totalSize ];
-    }
-    
-    //initialize 2D array
-    init2Darray( pathArray, -1, totalSize );
-
-	dijkstra( &graph, 0, pathArray );
-
-/////////////
-
-
-
-
-    //algorithm that inputs the path into the pathArray
-    // the forloop starts with 1 because you dont need to write a path 
-    // from 0 node to 0
-
-
-    //printing out test code
-    cout << endl << "In the main yo" << endl;
-    for( int i = 1; i < totalSize; i++ )
-    {
-        for( int j = 0; j < totalSize; j++ )
-        {
-            if( pathArray[i][j] == -1 )
-            {
-                //quit the for loop
-                j = totalSize;
-            }
-            else
-            {
-                cout << pathArray[i][j] << "  ";
-            }
-        }   
-        cout << endl;
-    }
-
-
-    testNetwork( &graph, pathArray, packetInfoArray, packetInstructions );
-
-
-////////
 	//graph.printGraph();
+
+	if( printDijkstra )
+	{
+		graph.printGraph();
+	}
+	cout << "Creating links using Dijkstra's" << endl;
+	dijkstra( &graph, 0 );
+	cout << "Links created" << endl;
+	
+
+	timeval startTime;
+	gettimeofday( &startTime, NULL );
+	initialEnergy = nodeSize * 100;
+
+	// Initialize varaibles for calculating simulation metrics.
+	int randomSignal;
+	int itterator = 0;
+	long waitTime;
+	long totalEndToEndTime;
+	timeval startEndToEnd;
+	vector< long > endToEndTime;
+	
+	// Run simulation
+	while( checkStatus( graph, sinkSize ) )
+	{
+		randomSignal = rand() % ( nodeSize ) + sinkSize;
+		gettimeofday( &startEndToEnd, NULL );
+		graph.sendSignal( randomSignal );
+		endToEndTime.push_back( getWaitTime( startEndToEnd ) );
+		itterator++;
+	}
+
+	endToEndTime.push_back( -1 ); // Used to find the last end to end time
+
+	waitTime = getWaitTime( startTime );
+
+	cout << " after " << itterator << " signals" << endl << endl;
+	cout << "Total simulation time: " << waitTime << " usec" << endl << endl;
+	cout << "Total throughput: " << (itterator/(float)waitTime) << " signals/usec" << endl << endl;
+
+	finalEnergy = 0;
+	for( itterator = sinkSize; itterator < totalSize; itterator++ )
+		finalEnergy += graph.arr[ itterator ].head->currentEnergy;
+
+	totalEndToEndTime = 0;
+	for( itterator = 0; endToEndTime[ itterator ] != -1; itterator++ )
+		totalEndToEndTime += endToEndTime[ itterator ];
+
+	cout << "Energy consumption: " << initialEnergy - finalEnergy << endl;
+	float percentageEnergy = (( initialEnergy - finalEnergy ) / initialEnergy ) * 100;
+	cout << "Overall energy consumption (percentage): " << percentageEnergy << "%" << endl << endl;
+
+	cout << "Average End To End time: " << (totalEndToEndTime/(float)itterator) << " usec/signal" << endl << endl;
+	cout << "End simulation." << endl;
 
 	return 0;
 }

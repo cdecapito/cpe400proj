@@ -22,6 +22,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <ctime>
+#include <sys/time.h>
 #include "objects.cpp"
 
 using namespace std;
@@ -31,7 +32,7 @@ using namespace std;
 int INFINITY = 999;
 
 void createRandomEnergy( float arr[], int totalSize, int sinkSize );
-bool create_links( Graph &graph, int totalSize, int sinkSize );
+bool create_links( Graph &graph, char filename[], int totalSize, int sinkSize );
 struct MinHeapNode *newMinHeapNode( int v, float energyConsumption );
 struct MinHeap *createMinHeap( int capacity );
 void swapMinHeapNode( struct MinHeapNode **a, struct MinHeapNode ** b );
@@ -41,14 +42,11 @@ struct MinHeapNode* extractMin( struct MinHeap *minHeap );
 void decreaseKey( struct MinHeap *minHeap, int v, float energyConsumption );
 bool isInMinHeap( struct MinHeap *minHeap, int v );
 void printArr( float arr[], int n );
-void dijkstra( Graph * graph, int src, int** pathArray );
-void fixPathArray( int ** pathArray,int  V );
+void dijkstra( Graph * graph, int src );
 void printSolution( float dist[], int V, int parent[] );
-void printPath( int parent[], int j);
-void outputPrintPath( fstream& fin, int parent[], int j );
-void init2Darray( int** array, int value, int V );
-void testNetwork( Graph * graph, int** pathArray, PacketInfo* packetInfoArray, int packetInstructions);
+int printPath( int parent[], int j );
 
+bool checkStatus( Graph& graph, int sinkNum );
 
 /**
  * @brief create_links
@@ -75,7 +73,7 @@ void testNetwork( Graph * graph, int** pathArray, PacketInfo* packetInfoArray, i
  * @note None
  */
  
-bool create_links( Graph &graph, int totalSize, int sinkSize )
+bool create_links( Graph &graph, char filename[], int totalSize, int sinkSize )
 {
 	ifstream fin;
 	int vertex;
@@ -83,7 +81,7 @@ bool create_links( Graph &graph, int totalSize, int sinkSize )
 	int pointer;
 	int temp;
 	float energy[ totalSize ];
-	fin.open( "links1.txt" );
+	fin.open( filename );
 
 	createRandomEnergy( energy, totalSize, sinkSize );
 
@@ -523,7 +521,7 @@ void printArr( float arr[], int n )
  *
  * @note None
  */
-void dijkstra( Graph * graph, int src, int** pathArray )
+void dijkstra( Graph * graph, int src )
 {
     //V = number of totalNodes
 	int V = graph->V; 
@@ -573,7 +571,7 @@ void dijkstra( Graph * graph, int src, int** pathArray )
 				dist[ u ] != INFINITY &&
 				temp->energyConsumption + dist[ u ] < dist[ v ] )
 			{
-                parent[ v] = u;
+                parent[ v ] = u;
 				dist[ v ] = dist[ u ] + temp->energyConsumption;
 
 				//update distance value in minheap
@@ -587,136 +585,60 @@ void dijkstra( Graph * graph, int src, int** pathArray )
 	}
 	//print shortest distance
 
+    //minheap int pos.  Shows the direction from a node to sink
     
-
-    //printSolution( dist, V, parent );
-
-
-
-///   Read Paths Out to a file ///
-
-    cout << endl << endl << "Output to file" << endl;
-    fstream fin ("output.txt");
-    for( int i = 1; i < V; i++ )
-    {   
-        
-        outputPrintPath( fin, parent, i );
-        //printPath( parent, i );
-        cout << endl;
-        fin << "-1 " << endl;
-    }
-
-    fin.close();
-
-/////////////////////////////////
-
-  
-///  Read the file that you made ///
-    
-    fin.open("output.txt");
-    int checker;    
-    int j = 0;
-
-
-
-    
-
-
-    //algorithm that inputs the path into the pathArray
-    // the forloop starts with 1 because you dont need to write a path 
-    // from 0 node to 0
-    cout << endl << "first loop" << endl;
-    
-    //read in the file again
-    fin >> checker;        
-
-    //pathArray[1][0] = 0;
-    for( int i = 1; i < V; i++ )
+   // cout << V << " before loops" << endl;
+/*
+    cout << minHeap -> size << endl;
+    for(int index = 0;index < V; index++ )
     {
-        //input the first part of the path
-        pathArray[i][j] = 0;
-        cout << pathArray[i][j] << " ";
         
-        //iterate the array
-        j++;
-
-        //if there is a -1 in checker that means the path has ended
-        // from the given node.
-        while( checker != -1 )
+        for( int j = 0; j < minHeap[ index ].size; j++ )
         {
-
-            //input next part of path
-            pathArray[i][j] = checker;
-            cout << pathArray[i][j] << " ";
-
-            //iterate the array
-            j++;
-
-            //read in the file again
-            fin >> checker;
-        }
-
-        //this code will be done if path from "i" node is finished
+            //cout << minHeap[ index ].array[ j ] << " ";
+            //cout << minHeap->array[index][j].v << " ";
+        } 
         cout << endl;
-        j = 0;
-        fin >> checker;
     }
-    
-    fin.close();
+*/
+   	cout << endl << endl;
 
-/////////////////////////////////////////////////
+    printSolution( dist, V, parent );
 
-    fixPathArray( pathArray, V );
+    cout << endl << endl;
 
-   
-	printArr( dist, V );
+	for (int i = 1; i < V; ++i)
+	{
+		graph->arr[ i ].head->forwardSignalTo = parent[ i ];
+	}
+
+	//printArr( dist, V );
 }
 
-
-//makes path from main node to sink
-void fixPathArray( int ** pathArray,int  V )
-{
-    int index = 1;
-    int innerIndex = 0;
-    int checkLeft = 0;
-    int checkRight = 0;
-    
-    for( index = 1; index < V; index++ )
-    {
-        for( innerIndex = 0; innerIndex < V; innerIndex++ )
-        {
-            if( pathArray[ index ][ innerIndex ] != -1 )
-            {
-                checkRight++;
-            }
-            else
-            {
-                checkRight--;
-                //swap around numbers to get the array correct
-                while( checkLeft <= checkRight )
-                {
-                    //cout << checkLeft << "-" << checkRight << "I be swap" << pathArray[ index ][ checkLeft ] << " - " <<pathArray[ index ][ checkRight ] << endl;
-                    
-                    int temp = pathArray[ index ][ checkLeft ];
-                    pathArray[ index ][ checkLeft ] = 
-                        pathArray[ index ][ checkRight ];
-    
-                    pathArray[ index ][ checkRight ] =
-                        temp;
-                
-                    checkLeft++;
-                    checkRight--;
-                } 
-                //end the forloop
-                innerIndex = V;
-            }
-        }
-        checkLeft = checkRight = 0;
-    }
-
-}
-
-
+/**
+ * @brief 	Print solution
+ *
+ * @details Outputs all values of the total link cost to reach sink from any node
+ *			also outputs the path to reach sink from all nodes
+ *          
+ * @pre 	none
+ *
+ * @post 	returns true if in heap, false otherwise
+ *
+ * @par 	Algorithm 
+ *      	bool variable
+ *      
+ * @exception None
+ *
+ * @param [in] MinHeap provides minHeap pointer ]
+ *			   v provides index value of int
+ *
+ * @param [out] 
+ *
+ * @return bool
+ *
+ * @note None
+ */
 void printSolution( float dist[], int V, int parent[] )
 {
     int src = 0;
@@ -726,94 +648,57 @@ void printSolution( float dist[], int V, int parent[] )
     for( int i = 1; i < V; i++ )
     {
         cout << endl << src << " -> " << i << "      "<< dist[i] << "          " << src;
-        printPath(parent, i );
+        printPath( parent, i );
     }
 
 }
 
 
-void printPath( int parent[], int j )
+int printPath( int parent[], int j )
 {
-    if( parent[j] == -1)
-        return;
-    
-    printPath(parent, parent[j] );
-    cout<< j;
-
-
-}
-
-void outputPrintPath( fstream& fin, int parent[], int j )
-{
-    if( parent[j] == -1)
-        return;
-    
-    outputPrintPath(fin, parent, parent[j] );
-    fin << j << " ";
-    cout<< j;
-    
-}
-
-
-void init2Darray( int** array, int value, int V )
-{
-    //array = new int*[ V ];
-    for(int i = 0; i < V; i++ )
+    if( parent[j] == -1 )
     {
-        //array[i ] = new int[ V ];
-        for( int j = 0; j < V; j++)
-        {
-            array[i][j] = value;
-        }
-
+        return j;
     }
 
+    printPath( parent, parent[j] );
+    cout << j << " ";
+
+    return j;
 }
 
-
-void testNetwork( Graph* graph, int** pathArray, PacketInfo* packetInfoArray, int packetInstructions)
+bool checkStatus( Graph& graph, int sinkNum )
 {
-    int index = 0;
-    //int V = graph->V;
-    int workingNodeNum;
-    int numberOfPackets;
-    int destIndex;
-    int srcIndex;
-    int pathIndex = 0;    
-    int timeCounter = 0;
+	int nodeNum = graph.V;
+	for( int i = sinkNum + 1; i < nodeNum; i++ )
+	{
+		if( graph.arr[ i ].head->currentEnergy < graph.arr[ i ].head->energyConsumption )
+		{
+			cout << "Failure at node " << i;
+			return false;
+		}
+	}
 
+	return true;
+}
 
-    for( index = 0; index < packetInstructions; index++ )
-    {
-        //get the instructions in order
-        workingNodeNum = packetInfoArray[ index ].nodeNum;
-        numberOfPackets = packetInfoArray[ index ].numberOfPackets;
+long getWaitTime( timeval& start )
+{
+	timeval current;
+	gettimeofday( &current, NULL );
 
-        //cout << workingNodeNum << "-" << numberOfPackets << endl;
+	int sec, usec;
 
+	sec =  current.tv_sec - start.tv_sec;
+	usec = current.tv_usec - start.tv_usec; 
 
-       
-        
-        //now using the pathArray determine the destNode
-        if( pathArray[ workingNodeNum ][ pathIndex + 1 ] 
-                != -1)
-        {
-            //find which nodes to send and recieve with
-            srcIndex = pathArray[ workingNodeNum ][ pathIndex ];
-            destIndex = pathArray[ workingNodeNum ][ pathIndex + 1 ];
-            while( numberOfPackets > 0 )
-            {
-                
-                //send packet info: src, dest node, and pathOf future nodes
-                graph->sendPacket( srcIndex, destIndex, pathArray[ workingNodeNum ], pathIndex );
-                
-                timeCounter++;
-                numberOfPackets--;
-            }
-        }
-    }
-    
-    cout << "timeCounter: " << timeCounter << endl;
+	if( usec < 0 )
+	{
+		usec += 1000000;
+		sec -= 1;
+	}
+
+	return (long)( sec*1000000 + (double)usec ); 
 }
 
 
