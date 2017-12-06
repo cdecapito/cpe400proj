@@ -6,7 +6,9 @@
   * 
   * @details holds definitions for Graph and MinHeap
   *
-  * @version  1.10 Carli DeCapito
+  * @version  
+  *
+  *           1.10 Carli DeCapito
   *           Dijsktra's Algorithm 11/22/17
   *
   *           1.01 Carli DeCapito
@@ -22,20 +24,13 @@
 
 using namespace std;
 
-//PACKET OBJECT DEFINITIONS
-struct PacketInfo{
-	int nodeNum; //source node
-	int numberOfPackets;  //number of packets being sent
-};
-
-
 // GRAPH OBJECT DEFINITIONS
 struct Node{
   float currentEnergy;  //current health 
   float energyConsumption;  //health consumption per packet transfer
   int dest;   //destination node
   struct Node* next;  //next node pointer
-  int forwardSignalTo;
+  int forwardSignalTo;  // index of the next node in the path to sink
 };
 
 struct AdjList
@@ -111,6 +106,7 @@ public:
    		}
    	}
 
+    // send a signal to sink from the src node
    	bool sendSignal( int src )
    	{
    		if( src == 0 )
@@ -119,6 +115,7 @@ public:
    		Node *temp = arr[ src ].head;
    		temp->currentEnergy -= temp->energyConsumption;
 
+      // Arbitrary timer
       for( int i = 0; i < 100000; i++ )
         ;
 
@@ -128,7 +125,7 @@ public:
 };
 
 
-// MINHEAP OBJ DEFINITIONS
+// MINHEAP OBJECT DEFINITIONS
 struct MinHeapNode
 {
   int v; //index

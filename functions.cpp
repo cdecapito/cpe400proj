@@ -6,14 +6,30 @@
   * 
   * @details implements simulation
   *
-    * @version  1.10 Carli DeCapito
-  *           Dijsktra's Algorithm 11/22/17
+    * @version  
+  *			 Carli DeCapito
+  *			 Code Documentation 11/5/17
+  *	
+  *			 Carli DeCapito
+  *			 Graph (10,50,75,100) Information and Trials 12/4/17
   *
-  *           1.01 Carli DeCapito
-  *           Node Creation 11/20/17
+  *			 Carli DeCapito & Eugene Nelson
+  *			 Evaluation Metric Information 12/3/17
+  *	
+  *			 Jervyn Suguitan & Eugene Nelson
+  *			 Random Packet Generation 12/2/17
+  *	
+  *			 Jervyn Suguitan 
+  *			 Node Path Table Save 11/30/17
   *
-  *           1.00 Carli DeCapito
-  *           Original Documentation (11/13/17)
+  *			 1.10 Carli DeCapito
+  *			 Dijsktra's Algorithm 11/22/17
+  *
+  *			 1.01 Carli DeCapito
+  *			 Node Creation 11/20/17
+  *
+  *			 1.00 Carli DeCapito
+  *			 Original Documentation 11/13/17
   *
   * @note None
   */
@@ -44,7 +60,7 @@ bool isInMinHeap( struct MinHeap *minHeap, int v );
 void printArr( float arr[], int n );
 void dijkstra( Graph * graph, int src );
 void printSolution( float dist[], int V, int parent[] );
-int printPath( int parent[], int j );
+void printPath( int parent[], int j );
 
 bool checkStatus( Graph& graph, int sinkNum );
 
@@ -583,24 +599,7 @@ void dijkstra( Graph * graph, int src )
 			temp = temp->next;
 		}
 	}
-	//print shortest distance
 
-    //minheap int pos.  Shows the direction from a node to sink
-    
-   // cout << V << " before loops" << endl;
-/*
-    cout << minHeap -> size << endl;
-    for(int index = 0;index < V; index++ )
-    {
-        
-        for( int j = 0; j < minHeap[ index ].size; j++ )
-        {
-            //cout << minHeap[ index ].array[ j ] << " ";
-            //cout << minHeap->array[index][j].v << " ";
-        } 
-        cout << endl;
-    }
-*/
    	cout << endl << endl;
 
     printSolution( dist, V, parent );
@@ -623,50 +622,92 @@ void dijkstra( Graph * graph, int src )
  *          
  * @pre 	none
  *
- * @post 	returns true if in heap, false otherwise
+ * @post 	Print the status of the links
  *
- * @par 	Algorithm 
- *      	bool variable
+ * @par 	None	
  *      
  * @exception None
  *
- * @param [in] MinHeap provides minHeap pointer ]
- *			   v provides index value of int
+ * @param [in] 	float[] dist 	Distance to the sink from node at [ position ]
+ *			   	int V 			Total size of the graph, including sinks
+ *				int[] parent 	The next node to go through to reach sink from [ position ]
  *
  * @param [out] 
  *
- * @return bool
+ * @return void
  *
  * @note None
  */
+
 void printSolution( float dist[], int V, int parent[] )
 {
     int src = 0;
 
     //formating for reading the paths
     cout << "Vertex     " << "Distance     " << "Path" << endl;
+    cout << "====================================" << endl;
     for( int i = 1; i < V; i++ )
     {
-        cout << endl << src << " -> " << i << "      "<< dist[i] << "          " << src;
+        cout << endl << src << " -> " << i << "      "<< dist[i] << "          " << src << " ";
         printPath( parent, i );
     }
 
 }
 
-
-int printPath( int parent[], int j )
+/**
+ * @brief 	Print path
+ *
+ * @details Outputs the path from node j to the sink
+ *          
+ * @pre 	The path to sink has been built using dijkstras() and parent[] was filled
+ *
+ * @post 	The path from node j to sink will be printed
+ *
+ * @par 	None	
+ *      
+ * @exception None
+ *
+ * @param [in] 	int[] parent 	The next node to go through to reach sink from [ position ]
+ *				int j			The node from which to print the path
+ *
+ * @param [out] 
+ *
+ * @return void
+ *
+ * @note None
+ */
+void printPath( int parent[], int j )
 {
     if( parent[j] == -1 )
-    {
-        return j;
-    }
+        return;
 
     printPath( parent, parent[j] );
     cout << j << " ";
-
-    return j;
 }
 
+
+/**
+ * @brief 	Check Status
+ *
+ * @details Checks the status of a graph with nodes of type Node to see if any 
+ *			nodes are out of energy (see objects.cpp)
+ *          
+ * @pre 	The Graph graph has nodes of type Node (see objects.cpp)
+ *
+ * @post 	The path from node j to sink will be printed
+ *
+ * @par 	None	
+ *      
+ * @exception None
+ *
+ * @param [in] 	int sinkNum		The number of sinks in the graph
+ *
+ * @param [out]	Graph& graph 	The graph whos nodes will be searched
+ *
+ * @return bool	The state of the graph. Good (true) or Dead (false)
+ *
+ * @note None
+ */
 bool checkStatus( Graph& graph, int sinkNum )
 {
 	int nodeNum = graph.V;
@@ -682,6 +723,31 @@ bool checkStatus( Graph& graph, int sinkNum )
 	return true;
 }
 
+
+
+/**
+ * @brief 	Get wait time
+ *
+ * @details Uses timer functions to find the system time between
+ *			start and the current time.
+ *          
+ * @pre 	None
+ *
+ * @post 	None
+ *
+ * @par 	Outputs the time in microseconds to allow for calculation	
+ *      
+ * @exception None
+ *
+ * @param [in] 	timeval& start	The starting time from where to measure
+ 								time difference
+ *
+ * @param [out]	
+ *
+ * @return long	The time difference between start and now, output in microseconds.
+ *
+ * @note None
+ */
 long getWaitTime( timeval& start )
 {
 	timeval current;
